@@ -50,6 +50,7 @@ static uint8_t	task_ready = 0;
 
 static task_polling_t* task_polling_table = (task_polling_t*)0;
 static uint8_t	task_polling_table_size = 0;
+static uint8_t	task_polling_ability[AK_TASK_POLLING_MAX];
 
 static void task_sheduler();
 
@@ -86,6 +87,10 @@ void task_polling_create(task_polling_t* task_polling_tbl) {
 	if (task_polling_tbl) {
 		task_polling_table = task_polling_tbl;
 		while (task_polling_tbl[idx].id != AK_TASK_POLLING_EOT_ID) {
+			if (idx >= AK_TASK_POLLING_MAX) {
+				FATAL("TK", 0x08);
+			}
+			task_polling_ability[idx] = task_polling_tbl[idx].ability;
 			idx++;
 		}
 		task_polling_table_size = idx;
@@ -316,7 +321,7 @@ void task_polling_set_ability(task_id_t task_polling_id, uint8_t ability) {
 
 			ENTRY_CRITICAL();
 
-			__task_polling_table->ability = ability;
+			task_polling_ability[__task_polling_table - task_polling_table] = ability;
 
 			EXIT_CRITICAL();
 
@@ -333,11 +338,11 @@ void task_polling_set_ability(task_id_t task_polling_id, uint8_t ability) {
 
 void task_polling_run() {
 	task_polling_t* __task_polling_table = task_polling_table;
+	uint8_t idx = 0;
 
 	while (__task_polling_table->id < AK_TASK_POLLING_EOT_ID) {
-
 		ENTRY_CRITICAL();
-		if (__task_polling_table->ability == AK_ENABLE) {
+		if (task_polling_ability[idx] == AK_ENABLE) {
 
 			EXIT_CRITICAL();
 			__task_polling_table->task_polling();
@@ -346,6 +351,7 @@ void task_polling_run() {
 			EXIT_CRITICAL();
 		}
 		__task_polling_table++;
+		idx++;
 	}
 }
 

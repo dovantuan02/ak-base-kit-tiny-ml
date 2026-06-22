@@ -187,22 +187,20 @@ void sys_cfg_update_info() {
 	SYS_PRINT("Wellcome to Active Kernel %s\n", AK_VERSION);
 	SYS_PRINT("\n");
 
-#if 0
 	/* system banner */
-	SYS_PRINT("system information:\n");
-	SYS_PRINT("\tFLASH used:\t%d bytes\n", system_info.flash_used);
-	SYS_PRINT("\tSRAM used:\t%d bytes\n", system_info.ram_used);
-	SYS_PRINT("\t\tdata init size:\t\t%d bytes\n", system_info.data_init_size);
-	SYS_PRINT("\t\tdata non_init size:\t%d bytes\n", system_info.data_non_init_size);
-	SYS_PRINT("\t\tstack avail:\t\t%d bytes\n", system_info.stack_avail);
-	SYS_PRINT("\t\theap avail:\t\t%d bytes\n", system_info.heap_avail);
-	SYS_PRINT("\t\tother:\t\t\t%d bytes\n", system_info.ram_other);
-	SYS_PRINT("\n");
-	SYS_PRINT("\tcpu clock:\t%d Hz\n", system_info.cpu_clock);
-	SYS_PRINT("\ttime tick:\t%d ms\n", system_info.tick);
-	SYS_PRINT("\tconsole:\t%d bps\n", system_info.console_baudrate);
+	SYS_PRINT("---> system information:\n");
+	SYS_PRINT("FLASH used:\t%d bytes\n", system_info.flash_used);
+	SYS_PRINT("SRAM used:\t%d bytes\n", system_info.ram_used);
+	SYS_PRINT("\tdata init size:\t\t%d bytes\n", system_info.data_init_size);
+	SYS_PRINT("\tdata non_init size:\t%d bytes\n", system_info.data_non_init_size);
+	SYS_PRINT("\tstack avail:\t\t%d bytes\n", system_info.stack_avail);
+	SYS_PRINT("\theap avail:\t\t%d bytes\n", system_info.heap_avail);
+	SYS_PRINT("\tother:\t\t\t%d bytes\n", system_info.ram_other);
+	SYS_PRINT("");
+	SYS_PRINT("cpu clock:\t%d Hz\n", system_info.cpu_clock);
+	SYS_PRINT("time tick:\t%d ms\n", system_info.tick);
+	SYS_PRINT("console:\t%d bps\n", system_info.console_baudrate);
 	SYS_PRINT("\n\n");
-#endif
 }
 
 /******************************************************************************

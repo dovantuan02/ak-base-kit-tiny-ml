@@ -304,41 +304,82 @@ uint8_t flash_transfer(uint8_t data) {
 * adc function
 * + CT sensor
 * + themistor sensor
+* + MIC analog
 * Note: MUST be enable internal clock for adc module.
 *******************************************************************************/
 void io_cfg_adc1(void) {
 	ADC_InitTypeDef ADC_InitStructure;
-	RCC_HSICmd(ENABLE);
-	while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
-
-	/* Enable ADC1 clock */
-	RCC_APB2PeriphClockCmd(BAT_ADC_CLOCK , ENABLE);
-	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
-	ADC_InitStructure.ADC_ContinuousConvMode =DISABLE;
-	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-	ADC_InitStructure.ADC_NbrOfConversion = 2;
-	ADC_Init(ADC1, &ADC_InitStructure);
-	ADC_Cmd(ADC1, ENABLE);
-}
-
-void adc_bat_io_cfg() {
+	ADC_CommonInitTypeDef ADC_CommonInitStructure;
 	GPIO_InitTypeDef    GPIO_InitStructure;
-	RCC_AHBPeriphClockCmd(BAT_ADC_IO_CLOCK, ENABLE);
+	RCC_AHBPeriphClockCmd(A0_ADC_IO_CLOCK, ENABLE);
 
-	GPIO_InitStructure.GPIO_Pin = BAT_ADC_PIN;
+	GPIO_InitStructure.GPIO_Pin = A0_ADC_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init(BAT_ADC_PORT, &GPIO_InitStructure);
+	GPIO_Init(A0_ADC_PORT, &GPIO_InitStructure);
+
+	/* Enable HSI (ADC clock source) */
+	RCC_HSICmd(ENABLE);
+	while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
+	/* Enable ADC1 clock */
+	RCC_APB2PeriphClockCmd(A0_ADC_CLOCK , ENABLE);
+	/* Common config: prescaler HSI div 4 = ~4MHz */
+	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div4;
+	ADC_CommonInit(&ADC_CommonInitStructure);
+	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
+	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+	ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T9_CC2;
+	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	ADC_InitStructure.ADC_NbrOfConversion = 1;
+	ADC_Init(ADC1, &ADC_InitStructure);
+	/* Enable ADC and wait for ready */
+	ADC_Cmd(ADC1, ENABLE);
+	while(ADC_GetFlagStatus(ADC1, ADC_FLAG_ADONS) == RESET);
+	/* Configure channel 0 once */
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_4Cycles);
+	/* Start continuous conversion */
+	ADC_SoftwareStartConv(ADC1);
+	/* TIM6 clock: APB1 = 32MHz
+	* Target: 16000 Hz (period 62.5 us)
+	* Prescaler: 32 -> 1 MHz (1 us tick)
+	* Period: 62 -> 1 MHz / (62 + 1) = 15873 Hz (~16kHz)
+	*/
+#define TIM_PRESCALER       (32 - 1)
+#define TIM_PERIOD          (62)
+	TIM_TimeBaseInitTypeDef TIM_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
+    TIM_InitStructure.TIM_Prescaler = TIM_PRESCALER;
+    TIM_InitStructure.TIM_Period = TIM_PERIOD;
+    TIM_InitStructure.TIM_ClockDivision = 0;
+    TIM_InitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseInit(TIM6, &TIM_InitStructure);
+    TIM_ITConfig(TIM6, TIM_IT_Update, ENABLE);
+    NVIC_InitStructure.NVIC_IRQChannel = TIM6_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+	TIM_Cmd(TIM6, ENABLE);
 }
 
-uint16_t adc_bat_io_read(uint8_t chanel) {
-	ADC_RegularChannelConfig(ADC1, chanel, 1, ADC_SampleTime_4Cycles);
-	while(ADC_GetFlagStatus(ADC1, ADC_FLAG_ADONS) == RESET);
-
-	ADC_SoftwareStartConv(ADC1);
-	while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
+#ifdef MIC_EN
+uint16_t sys_adc_get_mic() {
 	return ADC_GetConversionValue(ADC1);
+}
+
+#else
+void adc_bat_io_cfg() {
+	GPIO_InitTypeDef    GPIO_InitStructure;
+	RCC_AHBPeriphClockCmd(A0_ADC_IO_CLOCK, ENABLE);
+
+	GPIO_InitStructure.GPIO_Pin = A0_ADC_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(A0_ADC_PORT, &GPIO_InitStructure);
 }
 
 uint32_t sys_ctr_get_vbat_voltage() {
@@ -355,13 +396,15 @@ uint32_t sys_ctr_get_vbat_voltage() {
 	ADC_SoftwareStartConv(ADC1);
 	while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
 
-	vref_data += ADC_GetConversionValue(ADC1);
+	vref_data = ADC_GetConversionValue(ADC1);
+	APP_DBG("Vref=%d\n", vref_data);
 
 	vref_cal = *VREFINT_CAL_ADDR;
 	vbatX1000 = (uint32_t)(3000.0 * (float)(vref_cal) / (float)vref_data);
 
 	return vbatX1000;
 }
+#endif
 
 uint32_t sys_ctr_get_mcu_temperature() {
 	//	• TS_CAL2 is the temperature sensor calibration value acquired at 110°C

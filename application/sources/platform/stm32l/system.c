@@ -26,8 +26,9 @@
 #include "timer.h"
 
 #include "app.h"
-
+#include "app_dbg.h"
 #include "sys_cfg.h"
+#include "mic.h"
 
 #if defined (TASK_MBMASTER_EN)
 #include "mbport.h"
@@ -183,7 +184,7 @@ void (* const isr_vector[])() = {
 		default_handler,						//	EXTI Line 15..10
 		default_handler,						//	RTC Alarm through EXTI Line
 		default_handler,						//	USB FS Wakeup from suspend
-		default_handler,						//	TIM6
+		timer6_irq,						//	TIM6
 		timer7_irq,								//	TIM7
 		};
 
@@ -450,13 +451,13 @@ void exti_line15_irq() {
 }
 
 void timer6_irq() {
-	task_entry_interrupt();
-
 	if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET) {
 		TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
-	}
 
-	task_exit_interrupt();
+		/* ADC in continuous mode — read latest value directly */
+		extern mic_pcm_t mic_pcm;
+		mic_timer_handle(&mic_pcm);
+	}
 }
 
 void timer7_irq() {

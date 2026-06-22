@@ -14,13 +14,14 @@ SOC_NAME = STM32L151CBT6
 SOC_FLASH_BYTES = 131072 # 128KB
 SOC_SRAM_BYTES = 16384	 # 16KB
 FLASH_BASE_ADDR_VAL = 0x08000000
+MODEL_FILE=mnist_model.h
 
 # Name of build target ex: ak-base-kit-stm32l151-application.bin
 NAME_MODULE = ak-base-kit-stm32l151-application
 PROJECT = $(NAME_MODULE)
 
-GCC_PATH			= $(HOME)/Workspace/Tools/gcc-arm-none-eabi-10.3-2021.10
-PROGRAMER_PATH		= $(HOME)/workspace/tools/STM32CubeProgrammer/bin
+GCC_PATH			?= /opt/gcc-arm-none-eabi-10.3-2021.10
+PROGRAMER_PATH		?= $(HOME)/workspace/tools/STM32CubeProgrammer/bin
 OPENOCD_CFG_PATH	= /usr/local/share/openocd/scripts/board/stm32ldiscovery.cfg
 
 # App start address, that need sync with declare in linker file and interrupt vector table.
@@ -48,6 +49,11 @@ OPTIMIZE_OPTION = -g -Os
 # RTOS development option.
 RTOS_DEV_OPTION = -URTOS_DEV_EN
 
+# AI option
+AI_OPTION = -DAI_EN
+
+MIC_OPTION = -DMIC_EN
+
 # Release build option, that is used in fatal function, restart system when fatal, and debug levels.
 RELEASE_OPTION = -URELEASE
 
@@ -63,7 +69,7 @@ IF_NETWORK_NRF24_OPTION = -UIF_NETWORK_NRF24_EN
 
 # Task compile option.
 TASK_ZIGBEE_OPTION = -UTASK_ZIGBEE_EN
-TASK_MBMASTER_OPTION = -DTASK_MBMASTER_EN
+TASK_MBMASTER_OPTION = -UTASK_MBMASTER_EN
 
 # Include sources file
 include sources/ak/Makefile.mk
@@ -194,6 +200,8 @@ GENERAL_FLAGS +=			\
 		$(IF_OPTION)		\
 		$(TASK_OPTION)		\
 		$(HARDWARE_OPTION)  \
+		$(AI_OPTION)		\
+		$(MIC_OPTION)		\
 		-DUSE_STDPERIPH_DRIVER	\
 		-DSTM32L1XX_MD		\
 		-DSTM32L_PLATFORM	\
@@ -304,11 +312,16 @@ clean:
 	$(Print) CLEAN $(OBJECTS_DIR) folder
 	@rm -rf $(OBJECTS_DIR)
 
+.PHONY: model_info
+model_info:
+
+
 .PHONY: info
 info: $(TARGET)
 	@echo "Memory usage info for $(TARGET):"
 	@$(MEMORY_INFO_COLLECT); \
-	$(MEMORY_INFO_PRINT)
+	$(MEMORY_INFO_PRINT) \
+	model_info
 
 asm: $(TARGET)
 	$(Print) disassemble-all $(<:.axf=.asm)

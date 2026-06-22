@@ -71,6 +71,7 @@
 #endif
 
 #include "buzzer.h"
+#include "mic.h"
 
 /* ----------------------- Json includes ------------------------------------*/
 //#include "json.hpp"
@@ -91,6 +92,7 @@ const app_info_t app_info { \
 			APP_VER, \
 };
 
+mic_pcm_t mic_pcm;
 static boot_app_share_data_t boot_app_share_data;
 
 static void app_power_on_reset();
@@ -131,12 +133,15 @@ int main_app() {
 
 	SPI.begin();
 
+	mic_init(&mic_pcm, sys_adc_get_mic);
+
 	/* adc peripheral configure */
 	io_cfg_adc1();			/* configure adc for thermistor and CT sensor */
 
 	/* adc configure for ct sensor */
+#ifndef MIC_EN
 	adc_bat_io_cfg();
-
+#endif
 	/* flash io init */
 	flash_io_ctrl_init();
 
@@ -161,7 +166,7 @@ int main_app() {
 	button_enable(&btn_down);
 
 	/* siren init */
-	BUZZER_Init();
+	// BUZZER_Init();
 	BUZZER_PlaySound(BUZZER_SOUND_STARTUP);
 
 	/* get boot share data */
@@ -275,7 +280,6 @@ int main_app() {
 #if !defined(IF_LINK_UART_EN)
 	sys_ctrl_shell_sw_to_nonblock();
 #endif
-
 	return task_run();
 }
 

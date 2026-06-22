@@ -1,4 +1,7 @@
 include sources/app/screens/Makefile.mk
+include sources/app/nn/Makefile.mk
+include sources/app/model/Makefile.mk
+# include sources/app/mic/Makefile.mk
 
 CFLAGS		+= -I./sources/app
 CPPFLAGS	+= -I./sources/app
@@ -11,7 +14,9 @@ SOURCES_CPP += sources/app/app.cpp
 SOURCES_CPP += sources/app/app_data.cpp
 SOURCES_CPP += sources/app/app_non_clear_ram.cpp
 SOURCES_CPP += sources/app/app_bsp.cpp
+ifeq ($(TASK_MBMASTER_OPTION), -DTASK_MBMASTER_EN)
 SOURCES_CPP += sources/app/app_modbus_pull.cpp
+endif
 SOURCES_CPP += sources/app/shell.cpp
 
 SOURCES_CPP += sources/app/task_shell.cpp

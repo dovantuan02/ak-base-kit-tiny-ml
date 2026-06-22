@@ -82,8 +82,9 @@ int32_t shell_boot(uint8_t* argv);
 int32_t shell_fwu(uint8_t* argv);
 int32_t shell_psv(uint8_t* argv);
 int32_t shell_buzzer(uint8_t* argv);
+#ifdef TASK_MBMASTER_EN
 int32_t shell_modbus(uint8_t* argv);
-
+#endif
 /*****************************************************************************/
 /*  command table
  */
@@ -108,7 +109,9 @@ const cmd_line_t lgn_cmd_table[] = {
 	{(const int8_t*)"fwu",		shell_fwu,			(const int8_t*)"app burn firmware"},
 	{(const int8_t*)"psv",		shell_psv,			(const int8_t*)"psv"},
 	{(const int8_t*)"beep",		shell_buzzer,		(const int8_t*)"buzzer play tones"},
+#ifdef TASK_MBMASTER_EN
 	{(const int8_t*)"modbus",	shell_modbus,		(const int8_t*)"modbus master"},
+#endif
 
 	/*************************************************************************/
 	/* debug command */
@@ -189,7 +192,9 @@ int32_t shell_ver(uint8_t* argv) {
 	LOGIN_PRINT("\ttime tick:\t%d ms\n", system_info.tick);
 	LOGIN_PRINT("\tconsole:\t%d bps\n", system_info.console_baudrate);
 	LOGIN_PRINT("\n");
+#ifndef MIC_EN
 	LOGIN_PRINT("\tVCC:\t%d mV\n", sys_ctr_get_vbat_voltage());
+#endif
 	LOGIN_PRINT("\tTEMP:\t%d *C\n", sys_ctr_get_mcu_temperature());
 	LOGIN_PRINT("\n\n");
 	return 0;
@@ -637,7 +642,9 @@ int32_t shell_dbg(uint8_t* argv) {
 	case 'v': {
 		uint32_t vbat;
 		(void)vbat;
+#ifndef MIC_EN
 		vbat = sys_ctr_get_vbat_voltage();
+#endif
 		LOGIN_PRINT("vbat: %d\n", vbat);
 	}
 		break;
@@ -940,7 +947,7 @@ int32_t shell_buzzer(uint8_t* argv) {
 
 	return 0;
 }
-
+#ifdef TASK_MBMASTER_EN
 int32_t shell_modbus(uint8_t* argv) {
 	switch (*(argv + 7)) {
 	case 'r':
@@ -969,3 +976,4 @@ int32_t shell_modbus(uint8_t* argv) {
 
 	return 0;
 }
+#endif

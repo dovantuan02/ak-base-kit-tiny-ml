@@ -87,11 +87,15 @@ extern "C"
 /****************************************************************************
  *Pin map CT sensor
 *****************************************************************************/
-#define BAT_ADC_PIN						(GPIO_Pin_0)
+// #define BAT_ADC_PIN						(GPIO_Pin_0)
+// #define BAT_ADC_PORT					(GPIOA)
+// #define BAT_ADC_CLOCK					(RCC_APB2Periph_ADC1)
+// #define BAT_ADC_IO_CLOCK				(RCC_AHBPeriph_GPIOA)
 
-#define BAT_ADC_PORT					(GPIOA)
-#define BAT_ADC_CLOCK					(RCC_APB2Periph_ADC1)
-#define BAT_ADC_IO_CLOCK				(RCC_AHBPeriph_GPIOA)
+#define A0_ADC_PIN                         (GPIO_Pin_0)
+#define A0_ADC_PORT                        (GPIOA)
+#define A0_ADC_CLOCK                       (RCC_APB2Periph_ADC1)
+#define A0_ADC_IO_CLOCK                    (RCC_AHBPeriph_GPIOA)
 
 /****************************************************************************
  *Pin map Oled
@@ -200,7 +204,7 @@ extern uint8_t nrf24l01_spi_rw(uint8_t);
 *******************************************************************************/
 /* configure adc peripheral */
 extern void io_cfg_adc1(void);
-
+extern uint16_t sys_adc_get_mic();
 /* adc configure for CT sensor */
 extern void adc_bat_io_cfg();
 extern uint16_t adc_bat_io_read(uint8_t);
