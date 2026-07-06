@@ -7,4 +7,3 @@ include sources/driver/AsyncDelay/Makefile.mk
 include sources/driver/gpio/Makefile.mk
 include sources/driver/buzzer/Makefile.mk
 include sources/driver/Max9814/Makefile.mk
-include sources/driver/ICM20948/Makefile.mk
