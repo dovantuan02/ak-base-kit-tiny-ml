@@ -80,17 +80,9 @@ void task_accel(ak_msg_t *msg)
         //    INV_ICM20948_SENSOR_LINEAR_ACCELERATION         (16-bit accel + 32-bit 6-axis quaternion)
         //    INV_ICM20948_SENSOR_ORIENTATION                 (32-bit 9-axis quaternion + heading accuracy)
 
-        // Enable the DMP accelerometer
         success &= (accel_sensor.icm20948.enableDMPSensor(INV_ICM20948_SENSOR_ACCELEROMETER) == ICM_20948_Stat_Ok);
-        // success &= (accel_sensor.icm20948.enableDMPSensor(INV_ICM20948_SENSOR_GYROSCOPE) == ICM_20948_Stat_Ok);
-
-        // Configuring DMP to output data at multiple ODRs:
-        // DMP is capable of outputting multiple sensor data at different rates to FIFO.
-        // Setting value can be calculated as follows:
-        // Value = (DMP running rate / ODR ) - 1
-        // E.g. For a 5Hz ODR rate when DMP is running at 55Hz, value = (55/5) - 1 = 10.
-        success &= (accel_sensor.icm20948.setDMPODRrate(DMP_ODR_Reg_Accel, 0) == ICM_20948_Stat_Ok); // Set to the maximum
-        // success &= (accel_sensor.icm20948.setDMPODRrate(DMP_ODR_Reg_Gyro, 0) == ICM_20948_Stat_Ok); // Set to the maximum
+        // Set to the maximum
+        success &= (accel_sensor.icm20948.setDMPODRrate(DMP_ODR_Reg_Accel, 0) == ICM_20948_Stat_Ok);
         success &= (accel_sensor.icm20948.enableFIFO() == ICM_20948_Stat_Ok);
         success &= (accel_sensor.icm20948.enableDMP() == ICM_20948_Stat_Ok);
         success &= (accel_sensor.icm20948.resetDMP() == ICM_20948_Stat_Ok);

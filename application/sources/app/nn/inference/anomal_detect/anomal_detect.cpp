@@ -10,26 +10,22 @@
 #include "anomal_detect.h"
 #include "model/anomal_detection_v1.h"
 
-#define AXES (3)
-#define SCALE_AXES (0.2f)  /* applied AFTER CONVERT_G_TO_MS2 */
-#define FILTER_CUTOFF (3.0f)
-#define SAMPLING_FREQ (58.0f)
-#define RAW_SAMPLES_PER_AXIS (116)
-#define FFT_LENGTH (16)
-#define FFT_OVERLAP (FFT_LENGTH / 2)
-#define NUM_BINS (FFT_LENGTH / 2 + 1)
-#define STRIDE (FFT_LENGTH - FFT_OVERLAP)
-#define ELEMENT_STRIDE 3
+#define AXES                    (3) /* x, y, z */
+#define SCALE_AXES              (0.2f)
+#define FILTER_CUTOFF           (3.0f)
+#define SAMPLING_FREQ           (58.0f)
+#define RAW_SAMPLES_PER_AXIS    (116) 
+#define FFT_LENGTH              (16)
+#define FFT_OVERLAP             (FFT_LENGTH / 2)
+#define NUM_BINS                (FFT_LENGTH / 2 + 1)
+#define STRIDE                  (FFT_LENGTH - FFT_OVERLAP)
 
-#define S2 13.5f
-#define PSD_SCALE (1.0f / (SAMPLING_FREQ * S2))
-#define CONVERT_G_TO_MS2(x) ((x) * 9.80665f)
+#define S2                      (13.5f)
+#define PSD_SCALE               (1.0f / (SAMPLING_FREQ * S2))
+#define CONVERT_G_TO_MS2(x)     ((x) * 9.80665f)
 
-/* StandardScaler normalization from training notebook
-   To update: run notebook and copy scaler.mean_ / scaler.scale_ values)
-   NOTE: scale = 1/std (inverse std), so formula: norm = (feature - mean) * scale */
-static const float NORM_MEAN[FEATURE_LEN] = { 673.8051f, -0.2186f, 0.1686f, 2.4455f, 4.0375f, 4.6634f, 2094.2317f, 0.4336f, 0.4695f, 2.4397f, 4.0200f, 5.4251f, 4572.1592f, -1.9544f, 2.9985f, 2.4415f, 4.0257f, 6.7278f };
-static const float NORM_SCALE[FEATURE_LEN] = { 0.002215f, 1.088804f, 0.699978f, 69.897835f, 22.677576f, 0.936788f, 0.000495f, 0.873590f, 0.474650f, 78.085106f, 25.289017f, 1.047305f, 0.001687f, 1.688269f, 0.626388f, 193.082199f, 63.170059f, 12.729128f };
+static const float NORM_MEAN[FEATURE_LEN] = {673.8051f, -0.2186f, 0.1686f, 2.4455f, 4.0375f, 4.6634f, 2094.2317f, 0.4336f, 0.4695f, 2.4397f, 4.0200f, 5.4251f, 4572.1592f, -1.9544f, 2.9985f, 2.4415f, 4.0257f, 6.7278f};
+static const float NORM_SCALE[FEATURE_LEN] = {0.002215f, 1.088804f, 0.699978f, 69.897835f, 22.677576f, 0.936788f, 0.000495f, 0.873590f, 0.474650f, 78.085106f, 25.289017f, 1.047305f, 0.001687f, 1.688269f, 0.626388f, 193.082199f, 63.170059f, 12.729128f};
 
 static const float SOS_COEFFS[3][6] = {
     {1.0326097345e-05f, 2.0652194690e-05f, 1.0326097345e-05f, 1.0f, -1.4485440706e+00f, 5.2855930280e-01f},
@@ -81,9 +77,7 @@ static void apply_filter(float *buf, uint32_t n, float state[3][2])
     }
 }
 
-static void compute_psd_maxhold(const float *buf, uint32_t n,
-                                const EmlFFT *fft_table,
-                                float psd_out[NUM_BINS])
+static void compute_psd_maxhold(const float *buf, uint32_t n, const EmlFFT *fft_table, float psd_out[NUM_BINS])
 {
     for (int k = 0; k < NUM_BINS; k++)
     {
@@ -139,10 +133,14 @@ static void extract_axis_features(const float *axis_data, uint32_t n,
 
     float mean = 0.0f;
     for (uint32_t i = 0; i < n; i++)
+    {
         mean += buf[i];
+    }
     mean /= n;
     for (uint32_t i = 0; i < n; i++)
+    {
         buf[i] -= mean;
+    }
 
     float sum_sq = 0.0f;
     float sum_cube = 0.0f;
@@ -224,17 +222,16 @@ int AnomalyInfer::extract_feature(void *data, uint32_t len)
     memset(filter_state, 0, sizeof(filter_state));
     if (len != RAW_SAMPLES_PER_AXIS)
     {
-        APP_DBG("AnomalyInfer: expected %d samples, got %d\n",
-                RAW_SAMPLES_PER_AXIS, len);
+        APP_DBG("Expected %d samples, got %d\n", RAW_SAMPLES_PER_AXIS, len);
         return -1;
     }
     if (!tables_ready)
     {
-        APP_DBG("AnomalyInfer: FFT tables not initialized\n");
+        APP_DBG("FFT tables not initialized\n");
         return -1;
     }
 
-    int16_t *raw = (int16_t *)data;
+    int16_t *raw = (int16_t *)(data);
 
     EmlFFT fft_table;
     fft_table.length = FFT_LENGTH / 2;
@@ -244,17 +241,16 @@ int AnomalyInfer::extract_feature(void *data, uint32_t len)
     float axis_buf[AXES][RAW_SAMPLES_PER_AXIS];
     for (uint32_t i = 0; i < len; i++)
     {
-        axis_buf[0][i] = (float)(CONVERT_G_TO_MS2(raw[i * ELEMENT_STRIDE + 0]) * SCALE_AXES);
-        axis_buf[1][i] = (float)(CONVERT_G_TO_MS2(raw[i * ELEMENT_STRIDE + 1]) * SCALE_AXES);
-        axis_buf[2][i] = (float)(CONVERT_G_TO_MS2(raw[i * ELEMENT_STRIDE + 2]) * SCALE_AXES);
+        axis_buf[0][i] = (float)(CONVERT_G_TO_MS2(raw[i * AXES + 0]) * SCALE_AXES);
+        axis_buf[1][i] = (float)(CONVERT_G_TO_MS2(raw[i * AXES + 1]) * SCALE_AXES);
+        axis_buf[2][i] = (float)(CONVERT_G_TO_MS2(raw[i * AXES + 2]) * SCALE_AXES);
     }
 
     float feat_per_axis[6];
     int feat_idx = 0;
     for (int a = 0; a < AXES; a++)
     {
-        extract_axis_features(axis_buf[a], len, filter_state[a],
-                              &fft_table, feat_per_axis);
+        extract_axis_features(axis_buf[a], len, filter_state[a], &fft_table, feat_per_axis);
         for (int f = 0; f < 6; f++)
         {
             features[feat_idx++] = feat_per_axis[f];
@@ -286,7 +282,8 @@ int AnomalyInfer::inference(void *data, uint32_t len)
         "Maritine",
         "Up-Down"};
     float norm_features[FEATURE_LEN];
-    for (int i = 0; i < FEATURE_LEN; i++) {
+    for (int i = 0; i < FEATURE_LEN; i++)
+    {
         norm_features[i] = (features[i] - NORM_MEAN[i]) * NORM_SCALE[i];
     }
     anomaly_model_regress(norm_features, FEATURE_LEN, out, MAX_PREDICT_CLASS);
@@ -300,6 +297,10 @@ int AnomalyInfer::inference(void *data, uint32_t len)
             max_prob = out[i];
             predicted_class = i;
         }
+    }
+    if (max_prob < 0.4f && predicted_class != 0)
+    {
+        predicted_class = 0; // Noise -> Idle
     }
 
     APP_DBG("[%08X] P(idle)=%.3f "
