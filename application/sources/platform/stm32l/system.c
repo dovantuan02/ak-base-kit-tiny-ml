@@ -73,6 +73,7 @@ void timer4_irq();
 void timer7_irq();
 void uart1_irq();
 void uart2_irq();
+void uart3_irq();
 void buzzer_irq( void );
 
 #if defined (TASK_MBMASTER_EN)
@@ -180,7 +181,7 @@ void (* const isr_vector[])() = {
 		default_handler,						//	USART2
 		#endif
 
-		default_handler,						//	USART3
+		uart3_irq,						//	USART3
 		default_handler,						//	EXTI Line 15..10
 		default_handler,						//	RTC Alarm through EXTI Line
 		default_handler,						//	USB FS Wakeup from suspend
@@ -267,6 +268,9 @@ void reset_handler() {
 	sys_cfg_tick(); /* system tick 1ms */
 	sys_cfg_console(); /* system console */
 
+	io_usart3_cfg(); /* external uart */
+	
+
 	/* invoke all static constructors */
 	cnt = __preinit_array_end - __preinit_array_start;
 	for (i = 0; i < cnt; i++)
@@ -285,6 +289,7 @@ void reset_handler() {
 	sys_cfg_update_info();
 
 	/* entry app function */
+
 	main_app();
 }
 
@@ -347,7 +352,6 @@ void usage_fault_handler() {
 /*******************************************/
 void systick_handler() {
 	static uint32_t div_counter = 0;
-
 	task_entry_interrupt();
 
 	/* increasing millis counter */
@@ -424,6 +428,21 @@ void uart1_irq() {
 void uart2_irq() {
 	task_entry_interrupt();
 	sys_irq_uart2();
+	task_exit_interrupt();
+}
+
+void uart3_irq() {
+	task_entry_interrupt();
+
+	if (USART_GetITStatus(USART3, USART_IT_RXNE) == SET) {
+		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+		(void)USART_ReceiveData(USART3);
+	}
+
+	if (USART_GetITStatus(USART3, USART_IT_TXE) == SET) {
+		USART_ClearITPendingBit(USART3, USART_IT_TXE);
+	}
+
 	task_exit_interrupt();
 }
 

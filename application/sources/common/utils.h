@@ -27,6 +27,7 @@ extern uint8_t mem_write(uint32_t, uint8_t*, uint32_t);
 extern int32_t str_cmp(const int8_t *str1, const int8_t *str2);
 extern int8_t * str_cpy (int8_t * destination, const int8_t * source);
 
+extern int8_t int16_to_int8(int16_t in);
 #ifdef __cplusplus
 }
 #endif

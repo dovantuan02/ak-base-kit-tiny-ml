@@ -178,13 +178,13 @@ enum {
 };
 
 /*****************************************************************************/
-/* DBG task define
+/*  Accel task define
  */
 /*****************************************************************************/
-/* define timer */
-/* define signal */
 enum {
-	AC_DBG_TEST_1 = AK_USER_DEFINE_SIG,
+	AC_ACCEL_INIT = AK_USER_DEFINE_SIG,
+	AC_ACCEL_SET_CONFIG,
+	AC_ACCEL_GET_CONFIG
 };
 
 /*****************************************************************************/

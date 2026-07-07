@@ -24,21 +24,22 @@ bool ring_buffer_is_empty(ring_buffer_t* ring_buffer) {
 }
 
 bool ring_buffer_is_full(ring_buffer_t* ring_buffer) {
-	return (ring_buffer->fill_size == ring_buffer->buffer_size) ? true : false;
+	return (ring_buffer->fill_size == (ring_buffer->buffer_size / ring_buffer->element_size)) ? true : false;
 }
 
 uint8_t ring_buffer_put(ring_buffer_t* ring_buffer, void* data) {
 	uint16_t next_tail_index;
 	uint16_t next_head_index;
+	uint16_t max_elements = ring_buffer->buffer_size / ring_buffer->element_size;
 
 	if (data != NULL) {
 		memcpy((uint8_t*)(ring_buffer->buffer + ring_buffer->tail_index * ring_buffer->element_size), (uint8_t*)data, ring_buffer->element_size);
 
-		next_tail_index = (++ring_buffer->tail_index) % ring_buffer->buffer_size;
+		next_tail_index = (++ring_buffer->tail_index) % max_elements;
 		ring_buffer->tail_index = next_tail_index;
 
-		if (ring_buffer->fill_size == ring_buffer->buffer_size) {
-			next_head_index = (++ring_buffer->head_index) % ring_buffer->buffer_size;
+		if (ring_buffer->fill_size == max_elements) {
+			next_head_index = (++ring_buffer->head_index) % max_elements;
 			ring_buffer->head_index = next_head_index;
 		}
 		else {
@@ -62,7 +63,7 @@ uint8_t ring_buffer_get(ring_buffer_t* ring_buffer, void* data) {
 	if (data != NULL) {
 		memcpy((uint8_t*)data, (uint8_t*)(ring_buffer->buffer + ring_buffer->head_index * ring_buffer->element_size), ring_buffer->element_size);
 
-		next_head_index = (++ring_buffer->head_index) % ring_buffer->buffer_size;
+		next_head_index = (++ring_buffer->head_index) % (ring_buffer->buffer_size / ring_buffer->element_size);
 		ring_buffer->head_index = next_head_index;
 
 		ring_buffer->fill_size--;

@@ -170,7 +170,7 @@ void twi_setFrequency(uint32_t frequency)
 uint8_t twi_readFrom(uint8_t address, uint8_t* data, uint8_t length, uint8_t sendStop)
 {
 	uint8_t read = 0;
-	uint32_t timeout = 10000;
+	uint32_t timeout = 100000;
 
 	/* Send STRAT condition a second time */
 	I2C_GenerateSTART(I2C1, ENABLE);

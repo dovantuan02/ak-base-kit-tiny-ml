@@ -111,3 +111,7 @@ int8_t * str_cpy(int8_t * destination, const int8_t * source) {
 
 	return destination;
 }
+
+int8_t int16_to_int8(int16_t in) {
+    return (int8_t)((int32_t)in * INT8_MAX / INT16_MAX);
+}

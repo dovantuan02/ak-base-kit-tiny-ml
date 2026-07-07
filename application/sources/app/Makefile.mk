@@ -1,6 +1,5 @@
 include sources/app/screens/Makefile.mk
 include sources/app/nn/Makefile.mk
-include sources/app/model/Makefile.mk
 # include sources/app/mic/Makefile.mk
 
 CFLAGS		+= -I./sources/app
@@ -33,3 +32,4 @@ SOURCES_CPP += sources/app/task_if.cpp
 SOURCES_CPP += sources/app/task_rf24_if.cpp
 SOURCES_CPP += sources/app/task_uart_if.cpp
 SOURCES_CPP += sources/app/task_dbg.cpp
+SOURCES_CPP += sources/app/task_accel_sensor.cpp

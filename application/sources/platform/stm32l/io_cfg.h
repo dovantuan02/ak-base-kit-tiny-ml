@@ -134,8 +134,25 @@ extern "C"
 #define USART2_CLK						RCC_APB1Periph_USART2
 
 /****************************************************************************
+ *Pin map UART3 - PB10 (TX), PB11 (RX)
+ *****************************************************************************/
+#define USART3_TX_PIN                   GPIO_Pin_10
+#define USART3_TX_GPIO_PORT             GPIOB
+#define USART3_TX_GPIO_CLK              RCC_AHBPeriph_GPIOB
+#define USART3_TX_SOURCE                GPIO_PinSource10
+#define USART3_TX_AF                    GPIO_AF_USART3
+
+#define USART3_RX_PIN                   GPIO_Pin_11
+#define USART3_RX_GPIO_PORT             GPIOB
+#define USART3_RX_GPIO_CLK              RCC_AHBPeriph_GPIOB
+#define USART3_RX_SOURCE                GPIO_PinSource11
+#define USART3_RX_AF                    GPIO_AF_USART3
+
+#define USART3_CLK                      RCC_APB1Periph_USART3
+
+/****************************************************************************
  *UART RS485 - RS485 dir io config
-*****************************************************************************/
+ *****************************************************************************/
 #define USART_RS485						(USART2)
 #define USART_RS485_CLK					(RCC_APB1Periph_USART2)
 #define USART_RS485_IRQn				(USART2_IRQn)
@@ -259,6 +276,13 @@ extern uint8_t io_uart2_getc();
  *io uart for rs485-modbusRTU
  * see more in mbportserial.c
 ******************************************************************************/
+/******************************************************************************
+ * uart3 function
+ *******************************************************************************/
+void io_usart3_cfg();
+void io_usart3_putc(uint8_t);
+extern uint8_t io_usart3_getc();
+
 extern void io_uart_rs485_cfg();
 extern void io_rs485_dir_mode_output();
 extern void io_rs485_dir_low();

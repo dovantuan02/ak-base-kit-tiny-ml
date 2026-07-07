@@ -43,6 +43,7 @@
 #include "task_uart_if.h"
 #include "task_display.h"
 #include "task_zigbee.h"
+#include "task_accel_sensor.h"
 
 /* sys include */
 #include "sys_boot.h"
@@ -59,7 +60,9 @@
 
 /* common include */
 #include "screen_manager.h"
+#include "utils.h"
 
+#include "nn_infer.h"
 /* ----------------------- Platform includes --------------------------------*/
 
 /* ----------------------- Modbus includes ----------------------------------*/
@@ -73,6 +76,11 @@
 #include "buzzer.h"
 #include "mic.h"
 
+#include "Wire.h"
+
+mic_pcm_t mic_pcm;
+
+static NNInfer *infer;
 /* ----------------------- Json includes ------------------------------------*/
 //#include "json.hpp"
 
@@ -92,7 +100,7 @@ const app_info_t app_info { \
 			APP_VER, \
 };
 
-mic_pcm_t mic_pcm;
+
 static boot_app_share_data_t boot_app_share_data;
 
 static void app_power_on_reset();
@@ -265,6 +273,10 @@ int main_app() {
 	}
 #endif
 
+	infer = new NNInfer(AnomalyDetect);
+	if (!infer) {
+		APP_DBG("Allocate NN failed !\n");
+	}
 	/* start timer for application */
 	app_init_state_machine();
 	app_start_timer();
@@ -341,6 +353,41 @@ void task_polling_console() {
 	}
 }
 
+void task_polling_ml() {
+	struct icm_data_internal_t {
+		int16_t acc_x;
+		int16_t acc_y;
+		int16_t acc_z;
+		int16_t gyro_x;
+		int16_t gyro_y;
+		int16_t gyro_z;
+
+	};
+	ENTRY_CRITICAL();
+	if (ring_buffer_is_empty(&accel_sensor.sample_buff) || !infer) {
+		EXIT_CRITICAL();
+		return;
+	}
+
+	struct icm_data_internal_t icm_data;
+	if (ring_buffer_is_full(&accel_sensor.sample_buff)) {
+		/* array buffer x, y, z with 2s and 58Hz */
+		int16_t buffer[3 * 2 * 58];
+		int i = 0;
+		while (!ring_buffer_is_empty(&accel_sensor.sample_buff)) {
+			ring_buffer_get(&accel_sensor.sample_buff, &icm_data);
+			buffer[i++] = icm_data.acc_x;
+			buffer[i++] = icm_data.acc_y;
+			buffer[i++] = icm_data.acc_z;
+		}
+
+		/* inference */
+		int ret = infer->inference(buffer, 2 * 58);
+	}
+
+	EXIT_CRITICAL();
+}
+
 /*****************************************************************************/
 /* app initial function.
  */
@@ -371,6 +418,7 @@ void app_task_init() {
 
 	task_post_pure_msg(AC_TASK_RF24_IF_ID, AC_RF24_IF_INIT_NETWORK);
 	task_post_pure_msg(AC_TASK_UART_IF_ID, AC_UART_IF_INIT);
+	task_post_pure_msg(AC_TASK_ACCEL_ID, AC_ACCEL_INIT);
 }
 
 /*****************************************************************************/
@@ -381,10 +429,13 @@ void app_task_init() {
 /* hardware timer interrupt 10ms
  * used for led, button polling
  */
+
 void sys_irq_timer_10ms() {
 	button_timer_polling(&btn_mode);
 	button_timer_polling(&btn_up);
 	button_timer_polling(&btn_down);
+
+	accel_timer_polling(accel_sensor);
 }
 
 /* init non-clear RAM objects

@@ -1,8 +1,12 @@
-CFLAGS		+= -I./sources/app/nn -I./sources/app/screens -I./sources/driver/Adafruit_oled_drv
-CPPFLAGS	+= -I./sources/app/nn -I./sources/app/screens -I./sources/driver/Adafruit_oled_drv
+include sources/app/nn/model/Makefile.mk
+include sources/app/nn/inference/impact_detect/Makefile.mk
+include sources/app/nn/inference/anomal_detect/Makefile.mk
+
+CFLAGS		+= -I./sources/app/nn
+CPPFLAGS	+= -I./sources/app/nn
+
 
 VPATH += sources/app/nn
 
 # CPP source files
-SOURCES += sources/app/nn/BitNetMCU.c
-SOURCES += sources/app/nn/BitNetMCU_inference.c
+SOURCES_CPP += sources/app/nn/nn_infer.cpp
