@@ -116,7 +116,6 @@ void task_accel(ak_msg_t *msg)
 
 void accel_timer_polling(Accel_t accel)
 {
-    
     struct icm_data_internal_t {
         int16_t acc_x;
         int16_t acc_y;
@@ -147,12 +146,12 @@ void accel_timer_polling(Accel_t accel)
                 xfprintf((void (*)(int))sys_ctrl_shell_put_char, "%.1f,%.1f,%.1f\n", x, y, z);
                 #else
                 struct icm_data_internal_t icm_data = {
-                .acc_x = data.Raw_Accel.Data.X,
-                .acc_y = data.Raw_Accel.Data.Y,
-                .acc_z = data.Raw_Accel.Data.Z,
-                .gyro_x = 0,
-                .gyro_y = 0,
-                .gyro_z = 0
+                    .acc_x = data.Raw_Accel.Data.X,
+                    .acc_y = data.Raw_Accel.Data.Y,
+                    .acc_z = data.Raw_Accel.Data.Z,
+                    .gyro_x = 0,
+                    .gyro_y = 0,
+                    .gyro_z = 0
                 };
                 if (!ring_buffer_is_full(&accel_sensor.sample_buff)) {
                     ring_buffer_put(&accel_sensor.sample_buff, &icm_data);
