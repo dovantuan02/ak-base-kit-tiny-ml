@@ -78,6 +78,19 @@ For each window of 116 samples per axis (348 values total), the pipeline process
 
 > **Important**: The Python code (in the notebook) and C++ code (on-device) are written to match exactly, guaranteeing identical feature extraction between training and inference.
 
+### CMSIS-DSP on-device implementation
+
+The C++ feature extraction on STM32L151 leverages **CMSIS-DSP** for efficient real-time computation:
+
+| CMSIS-DSP function | Usage |
+|---|---|
+| `arm_biquad_cascade_df2T_f32` | 6th-order Butterworth lowpass filter (3 cascaded biquads, direct-form II transposed) — filters out noise above 3 Hz before feature extraction |
+| `arm_cfft_f32` | Complex FFT (len 16) — computes PSD via periodogram across overlapping windows with max-hold aggregation |
+| `arm_mean_f32` | Computes mean for DC removal and PSD statistics |
+| `arm_offset_f32` | Subtracts mean vector from filtered signal |
+
+These CMSIS-DSP primitives run on the Cortex-M3 FPU, providing deterministic, cycle-counted DSP performance without external library overhead.
+
 ## 5. Model Architecture
 
 Compact fully-connected neural network (FCNN):
@@ -149,14 +162,10 @@ If max probability < 0.3 and predicted class != 0 (idle), force class to 0 — p
 
 ## 8. Related Files
 
-| File | Role |
-|------|------|
-| `nn/trainning/Anomaly-Detection.ipynb` | Colab notebook — training pipeline |
-| `nn/trainning/compute_scaler.py` | StandardScaler computation script |
-| `nn/trainning/anomaly-detection-export/` | Dataset export |
-| `nn/inference/anomal_detect/anomal_detect.h` | AnomalyInfer class header |
-| `nn/inference/anomal_detect/anomal_detect.cpp` | C++ implementation (DSP + inference) |
-| `nn/inference/anomal_detect/model/anomal_detection_v1.h` | Model weights (emlearn) |
-| `nn/nn_infer.h` / `nn/nn_infer.cpp` | Abstract base + dispatcher |
-| `app.cpp` | Task polling, NNInfer initialization |
-| `task_accel_sensor.cpp` / `task_accel_sensor.h` | ICM-20948 driver + ring buffer |
+| File | Role | 
+|------|------| 
+| [Trainning-Anomaly-Detection](../trainning/Anomaly-Detection.ipynb) | Colab notebook — training pipeline |
+| [Dataset](../trainning/anomaly-detection-export) | Dataset export |
+| [Anomal-Implement](../inference/anomal_detect) | AnomalyInfer class header |
+| [Model](../inference/anomal_detect/model/anomal_detection_v1.h) | Model weights (emlearn) |
+| [Sensor](../../task_accel_sensor.cpp) | ICM-20948 driver + ring buffer |

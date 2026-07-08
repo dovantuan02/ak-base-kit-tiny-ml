@@ -1,1 +1,0 @@
-edge-impulse-data-forwarder --serial-port /dev/ttyAM0 --baud-rate 115200
