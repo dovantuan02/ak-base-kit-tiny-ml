@@ -40,8 +40,6 @@ ICM-20948 @ 58 Hz  →  Ring buffer (2s = 116 samples)
 - **Sampling rate**: 58 Hz
 - **Window**: 116 samples (~2 seconds)
 
-[<img src="hardware/images/ak-embedded-base-kit-version-3.jpg" width="480"/>](<https://epcb.vn/products/ak-embedded-base-kit-lap-trinh-nhung-vi-dieu-khien-mcu>)
-
 ## Reference
 
 | Topic | Link |
