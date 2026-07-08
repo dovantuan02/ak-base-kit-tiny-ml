@@ -21,10 +21,13 @@
 #define FFT_OVERLAP             (FFT_LENGTH / 2)
 #define NUM_BINS                (FFT_LENGTH / 2 + 1)
 #define STRIDE                  (FFT_LENGTH - FFT_OVERLAP)
+#define FEATURE_PER_AXIS        (FEATURE_LEN / AXES)
 
 #define S2                      (13.5f)
 #define PSD_SCALE               (1.0f / (SAMPLING_FREQ * S2))
-#define CONVERT_G_TO_MS2(x)     ((x) * 9.80665f)
+#define SCALE_UP(x)             ((x) * 9.80665f)
+
+#define MAX_PREDICT_CLASS       (4)
 
 static const float NORM_MEAN[FEATURE_LEN] = {673.8051f, -0.2186f, 0.1686f, 2.4455f, 4.0375f, 4.6634f, 2094.2317f, 0.4336f, 0.4695f, 2.4397f, 4.0200f, 5.4251f, 4572.1592f, -1.9544f, 2.9985f, 2.4415f, 4.0257f, 6.7278f};
 static const float NORM_SCALE[FEATURE_LEN] = {0.002215f, 1.088804f, 0.699978f, 69.897835f, 22.677576f, 0.936788f, 0.000495f, 0.873590f, 0.474650f, 78.085106f, 25.289017f, 1.047305f, 0.001687f, 1.688269f, 0.626388f, 193.082199f, 63.170059f, 12.729128f};
@@ -35,9 +38,13 @@ static const float WINDOW[FFT_LENGTH] = {
 
 static const float BIQUAD_COEFFS_DF2T[3][5] = {
     {1.0326097345e-05f, 2.0652194690e-05f, 1.0326097345e-05f, +1.4485440706e+00f, -5.2855930280e-01f},
-    {1.0f, 2.0f, 1.0f, +1.5462039793e+00f, -6.3161378691e-01f},
-    {1.0f, 2.0f, 1.0f, +1.7506318227e+00f, -8.4733389384e-01f},
+    {1.0000000000e+00f, 2.0000000000e+00f, 1.0000000000e+00f, +1.5462039793e+00f, -6.3161378691e-01f},
+    {1.0000000000e+00f, 2.0000000000e+00f, 1.0000000000e+00f, +1.7506318227e+00f, -8.4733389384e-01f},
 };
+
+static const char *feat_name[FEATURE_PER_AXIS] = {"RMS", "Skewness", "Kurtosis", "FFT_Skew", "FFT_Kurt", "Log_PSD"};
+static const char *axis_name[AXES]             = {"X", "Y", "Z"};
+static const char *label[MAX_PREDICT_CLASS]    = {"Idle", "Left-Right", "Maritine", "Up-Down"};
 
 AnomalyInfer::AnomalyInfer()
 {
@@ -93,9 +100,7 @@ static void compute_psd_maxhold(const float *buf, uint32_t n, float psd_out[NUM_
     }
 }
 
-static void extract_axis_features(const float *axis_data, uint32_t n,
-                                  float state[3][2],
-                                  float out[6])
+static void extract_axis_features(const float *axis_data, uint32_t n, float state[3][2], float out[6])
 {
     float buf[RAW_SAMPLES_PER_AXIS];
     memcpy(buf, axis_data, n * sizeof(float));
@@ -168,12 +173,12 @@ static void extract_axis_features(const float *axis_data, uint32_t n,
         log_val = log10f(val);
     }
 
-    out[0] = rms;
-    out[1] = skewness;
-    out[2] = kurtosis;
-    out[3] = fft_skew;
-    out[4] = fft_kurt;
-    out[5] = log_val;
+    out[FeatureType::RMS] = rms;
+    out[FeatureType::Skewness] = skewness;
+    out[FeatureType::Kurtosis] = kurtosis;
+    out[FeatureType::FFT_Skew] = fft_skew;
+    out[FeatureType::FFT_Kurt] = fft_kurt;
+    out[FeatureType::Log_PSD] = log_val;
 }
 
 int AnomalyInfer::extract_feature(void *data, uint32_t len)
@@ -190,9 +195,9 @@ int AnomalyInfer::extract_feature(void *data, uint32_t len)
     float axis_buf[AXES][RAW_SAMPLES_PER_AXIS];
     for (uint32_t i = 0; i < len; i++)
     {
-        axis_buf[0][i] = (float)(CONVERT_G_TO_MS2(raw[i * AXES + 0]) * SCALE_AXES);
-        axis_buf[1][i] = (float)(CONVERT_G_TO_MS2(raw[i * AXES + 1]) * SCALE_AXES);
-        axis_buf[2][i] = (float)(CONVERT_G_TO_MS2(raw[i * AXES + 2]) * SCALE_AXES);
+        axis_buf[0][i] = (float)(SCALE_UP(raw[i * AXES + 0]) * SCALE_AXES);
+        axis_buf[1][i] = (float)(SCALE_UP(raw[i * AXES + 1]) * SCALE_AXES);
+        axis_buf[2][i] = (float)(SCALE_UP(raw[i * AXES + 2]) * SCALE_AXES);
     }
 
     float feat_per_axis[6];
@@ -217,19 +222,19 @@ int AnomalyInfer::inference(void *data, uint32_t len)
     {
         return -1;
     }
-
+    
+    
     APP_DBG("- Anomaly Features:\n");
-    for (int i = 0; i < FEATURE_LEN; i++)
+    for (int axis = 0; axis < AXES; axis++)
     {
-        APP_DBG("\t[%d]=%.4f\n", i, features[i]);
+        APP_DBG("[%s] \n", axis_name[axis]);
+        for (int feature = 0; feature < FEATURE_PER_AXIS; feature++)
+        {
+            APP_DBG("\t%s=%.4f\n", feat_name[feature], features[axis * FEATURE_PER_AXIS + feature]);
+        }
     }
-#define MAX_PREDICT_CLASS 4
+
     float out[MAX_PREDICT_CLASS];
-    const char *label[MAX_PREDICT_CLASS] = {
-        "Idle",
-        "Left-Right",
-        "Maritine",
-        "Up-Down"};
     float norm_features[FEATURE_LEN];
     for (int i = 0; i < FEATURE_LEN; i++)
     {

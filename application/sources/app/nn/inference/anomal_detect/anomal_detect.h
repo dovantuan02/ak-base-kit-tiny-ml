@@ -6,7 +6,16 @@
 
 #define FEATURE_LEN (18)
 
-class AnomalyInfer {
+enum FeatureType{
+    RMS = 0,
+    Skewness,
+    Kurtosis,
+    FFT_Skew,
+    FFT_Kurt,
+    Log_PSD
+};
+
+class AnomalyInfer {    
 private:
     float features[FEATURE_LEN];
     float filter_state[3][3][2];

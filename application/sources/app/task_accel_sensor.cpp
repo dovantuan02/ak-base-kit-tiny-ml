@@ -12,7 +12,7 @@
 #include "Wire.h"
 #include "sys_ctrl.h"
 
-#define CONVERT_G_TO_MS2(x) ((x) * 9.80665f)
+#define SCALE_UP(x) ((x) * 9.80665f)
 
 #define ACCEL_SAMPLE_RATE_HZ (58)
 #define ACCEL_SAMPLE_DURATION_SECONDS (2)
@@ -131,16 +131,14 @@ void accel_timer_polling(Accel_t accel)
         accel_sensor.icm20948.readDMPdataFromFIFO(&data);
 
         float x, y, z;
-        float gyro_x, gyro_y, gyro_z;
         x = y = z = 0.0f;
-        gyro_x = gyro_y = gyro_z = 0.0f;
         if ((accel_sensor.icm20948.status == ICM_20948_Stat_Ok) || (accel_sensor.icm20948.status == ICM_20948_Stat_FIFOMoreDataAvail))
         {
             if ((data.header & DMP_header_bitmap_Accel) > 0)
             {
-                x = CONVERT_G_TO_MS2((float)data.Raw_Accel.Data.X);
-                y = CONVERT_G_TO_MS2((float)data.Raw_Accel.Data.Y);
-                z = CONVERT_G_TO_MS2((float)data.Raw_Accel.Data.Z);
+                x = SCALE_UP((float)data.Raw_Accel.Data.X);
+                y = SCALE_UP((float)data.Raw_Accel.Data.Y);
+                z = SCALE_UP((float)data.Raw_Accel.Data.Z);
 
                 #if 0
                 xfprintf((void (*)(int))sys_ctrl_shell_put_char, "%.1f,%.1f,%.1f\n", x, y, z);
