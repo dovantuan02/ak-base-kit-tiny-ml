@@ -8,7 +8,7 @@ TinyML-based anomaly detection system running on the AK Embedded Base Kit (STM32
 
 The entire pipeline — from sensor sampling to feature extraction to neural inference — runs **on-device** on the Cortex-M3 using CMSIS-DSP, with no cloud or external compute required.
 
-> 📖 **Full documentation**: [application/sources/app/nn/docs/Readme.md](application/sources/app/nn/docs/Readme.md)
+> **Anomal Detection documentation**: [application/sources/app/nn/docs/Readme.md](application/sources/app/nn/docs/Readme.md)
 
 ## Project Structure
 
