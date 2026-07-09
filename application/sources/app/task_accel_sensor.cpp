@@ -140,7 +140,7 @@ void accel_timer_polling(Accel_t accel)
                 y = SCALE_UP((float)data.Raw_Accel.Data.Y);
                 z = SCALE_UP((float)data.Raw_Accel.Data.Z);
 
-                #if 0
+                #if 1
                 xfprintf((void (*)(int))sys_ctrl_shell_put_char, "%.1f,%.1f,%.1f\n", x, y, z);
                 #else
                 struct icm_data_internal_t icm_data = {
