@@ -1,0 +1,6 @@
+[submodule "application/sources/libraries/SparkFun_ICM-20948_ArduinoLibrary"]
+	path = application/sources/libraries/SparkFun_ICM-20948_ArduinoLibrary
+	url = https://github.com/sparkfun/SparkFun_ICM-20948_ArduinoLibrary.git
+[submodule "application/sources/libraries/emlearn"]
+	path = application/sources/libraries/emlearn
+	url = https://github.com/emlearn/emlearn.git
