@@ -1,12 +1,18 @@
-# AK TinyML — Anomaly Detection on MCU
+<div align="center">
+
+![Repo Traffic](https://komarev.com/ghpvc/?username=ak-base-kit-tiny-ml&label=Repo+Traffic&color=blue&style=flat-square)
+
+</div>
+
+# AK-Base-Kit TinyML — Anomaly Detection on MCU
 
 [<img src="hardware/images/ak-foundation-logo.png" width="240"/>](https://github.com/the-ak-foundation)
 
 TinyML-based anomaly detection system running on the AK Embedded Base Kit (STM32L151 + ICM-20948 IMU).
 
-3-axis accelerometer data is collected at 58 Hz, processed through a DSP pipeline (Butterworth lowpass, FFT, PSD), and classified by a small fully-connected neural network to detect **4 motion states**: idle, left-right, up-down, and vigorous shaking (maritine).
+3-axis accelerometer data is collected at 58 Hz, processed through a DSP pipeline (**Butterworth lowpass, FFT, PSD**), and classified by a small fully-connected neural network to detect **4 motion states**: idle, left-right, up-down, and vigorous shaking (maritine).
 
-The entire pipeline from sensor sampling to feature extraction to neural inference and runs on the Cortex-M3 using CMSIS-DSP, with no cloud or external compute required.
+The entire pipeline from sensor sampling to feature extraction to neural inference and runs on the Cortex-M3 using [CMSIS-DSP](https://github.com/ARM-software/CMSIS-DSP), with no cloud or external compute required.
 
 > **Anomal Detection documentation**: [application/sources/app/nn/docs/Readme.md](application/sources/app/nn/docs/Readme.md)
 

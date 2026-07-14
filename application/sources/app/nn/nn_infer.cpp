@@ -3,7 +3,8 @@
 #include "nn_infer.h"
 #include "anomal_detect.h"
 
-NNInfer::NNInfer(enum eModelName model) {
+NNInfer::NNInfer(enum eModelName model)
+{
     modelName = model;
     switch (model)
     {
@@ -16,12 +17,16 @@ NNInfer::NNInfer(enum eModelName model) {
     APP_DBG("Init NN for model %d, %08X\n", model, (unsigned int)infer);
 }
 
-NNInfer::~NNInfer() {
+NNInfer::~NNInfer()
+{
     APP_DBG("Free NN: %08X\n", (unsigned int)infer);
-    if (infer) {
-        switch (modelName) {
-        case AnomalyDetect: {
-            AnomalyInfer *p = static_cast<AnomalyInfer*>(infer);
+    if (infer)
+    {
+        switch (modelName)
+        {
+        case AnomalyDetect:
+        {
+            AnomalyInfer *p = static_cast<AnomalyInfer *>(infer);
             delete p;
             break;
         }
@@ -31,14 +36,17 @@ NNInfer::~NNInfer() {
     }
 }
 
-const void* NNInfer::getInfer() {
+const void *NNInfer::getInfer()
+{
     return infer;
 }
 
-int NNInfer::inference(void *data, uint32_t len) {
-    switch (modelName) {
+int NNInfer::inference(void *data, uint32_t len)
+{
+    switch (modelName)
+    {
     case AnomalyDetect:
-        return ((AnomalyInfer*)infer)->inference(data, len);
+        return ((AnomalyInfer *)infer)->inference(data, len);
     default:
         break;
     }

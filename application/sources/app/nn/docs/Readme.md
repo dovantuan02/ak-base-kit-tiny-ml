@@ -1,7 +1,13 @@
 # Anomaly Detection
 
 ## 1. Overview
+<div align="center">
+
 ![OverviewImage](image/title.png)
+
+**Figure 1:** System block diagram - STM32L151 MCU connected to ICM-20948 IMU, 3-axis accelerometer data processed through DSP pipeline and classified by neural network
+
+</div>
 
 This system detects anomalous motion using the ICM-20948 (9-DoF) sensor on an STM32L151 microcontroller. 3-axis accelerometer data (X, Y, Z) is collected, processed through a DSP pipeline, and fed into a small fully-connected neural network to classify 4 motion states.
 
@@ -50,14 +56,29 @@ Endpoints:
 [WS ] Go to https://studio.edgeimpulse.com/studio/1046470/acquisition/training to build your machine learning model!
 
 ```
+<div align="center">
+
 ![Device connected successfully](image/edge-impulse-connect-device-success.png)
+
+**Figure 2:** Terminal confirming successful device connection to "Anomaly-Detection" project on Edge Impulse
+
 ![Data collection UI](image/edge-impulse-collect-data-01.png)
+
+**Figure 3:** Edge Impulse Studio data collection interface streaming accelerometer data from device
+
+</div>
 
 ### Dataset
 
 The dataset was exported from Edge Impulse located at: [Dataset](../trainning/anomaly-detection-export)
 
+<div align="center">
+
 ![Edge Impulse dataset view](image/edge-impulse-dataset.png)
+
+**Figure 4:** Edge Impulse dataset overview with 4 motion classes: idle, left-right, maritine, up-down
+
+</div>
 
 It contains **4 classes**:
 
@@ -71,24 +92,24 @@ It contains **4 classes**:
 ## 4. DSP Pipeline
 
 ### Time-Domain Features:
-- RMS
-- Skewness
-- Kurtosis
+- [RMS](https://en.wikipedia.org/wiki/Root_mean_square)
+- [Skewness](https://en.wikipedia.org/wiki/Skewness)
+- [Kurtosis](https://en.wikipedia.org/wiki/Kurtosis)
 ### Frequency-Domain Features:
-- FFT Skewness
-- FFT Kurtosis
+- [FFT]((https://en.wikipedia.org/wiki/Fast_Fourier_transform)) Skewness
+- [FFT]((https://en.wikipedia.org/wiki/Fast_Fourier_transform)) Kurtosis
 - Log PSD
 
 ### Feature Vector Layout
 
 | Index | Feature |
 |-------|---------|
-| 0 | RMS |
-| 1 | Skewness |
-| 2 | Kurtosis |
-| 3 | FFT Skew |
-| 4 | FFT Kurt |
-| 5 | Log PSD |
+| 0     | RMS   |
+| 1     | Skewness |
+| 2     | Kurtosis |
+| 3     | FFT Skew |
+| 4     | FFT Kurt |
+| 5     | Log PSD |
 
 ### CMSIS-DSP
 These CMSIS-DSP primitives run on the Cortex-M3 FPU
@@ -115,9 +136,7 @@ Output: 4 class probabilities       Total: ~634 floats
 - File: [Model](../inference/anomal_detect/model/anomal_detection_v1.h)
 - Model contains weights + eml_net engine
 
-## 6. Inference
-
-### Processing Flow
+## 6. Processing Flow
 
 ```mermaid
 sequenceDiagram
@@ -150,17 +169,21 @@ sequenceDiagram
 
     CLS-->>Task: Predicted class (Idle, Left-Right, Up-Down, Maritine)
 ```
-## 7. Model's Loss and Accuracy 
+## 7. Loss, Accuracy, Confusion Matrix
 
 ![Plot-Loss](image/plot-train-loss.png)
 
+**Figure 5:** Training loss curve decreasing over epochs, converging to low value
+
 ![Plot-Accuracy](image/plot-train-accuracy.png)
 
-8. **Confusion Matrix**
+**Figure 6:** Training accuracy curve increasing and converging, achieving high accuracy on validation set
 
 ![Confusion Matrix Valid](image/confusion-matrix-validation.png)
 
-### Configuration parameters (CONFIG)
+**Figure 7:** Confusion matrix on validation set, showing per-class prediction accuracy
+
+### [Configuration parameters](../trainning/Anomaly-Detection.ipynb)
 
 | Parameter            | Value  | Description              |
 |----------------------|--------|--------------------------|
@@ -172,30 +195,17 @@ sequenceDiagram
 | fft_length           | 16     | FFT length               |
 | do_fft_overlap       | true   | 50% overlap              |
 | sampling_freq        | 58 Hz  | Sampling frequency       |
-| raw_samples_per_axis | 116    | Samples per axis (~2s)   |
+| raw_samples_per_axis | 116    | Samples per axis         |
 
 ## 8. Related Files
 
 | File | Role | 
 |------|------| 
-| [Trainning-Anomaly-Detection](../trainning/Anomaly-Detection.ipynb) | Training pipeline |
-| [Dataset](../trainning/anomaly-detection-export) | Dataset export |
-| [Anomal-Implement](../inference/anomal_detect) | AnomalyInfer class header |
-| [Model](../inference/anomal_detect/model/anomal_detection_v1.h) | Model weights (emlearn) |
-| [Sensor](../../task_accel_sensor.cpp) | ICM-20948 driver + ring buffer |
-
-## 9. Result
-### 1. Idle 
-![Predict-Idle](image/features-predict-idle.png)
-
-### 2. Up-Down 
-![Predict-Up-Down](image/features-predict-up-down.png)
-
-### 3. Left-Right 
-![Predict-Left-Rigt](image/features-predict-left-right.png)
-
-### 4. Maritine 
-![Predict-Maritine](image/features-predict-maritine.png)
+| [Trainning-Anomaly-Detection](../trainning/Anomaly-Detection.ipynb)   | Training pipeline |
+| [Dataset](../trainning/anomaly-detection-export)                      | Dataset export |
+| [Anomal-Implement](../inference/anomal_detect)                        | AnomalyInfer class header |
+| [Model](../inference/anomal_detect/model/anomal_detection_v1.h)       | Model weights (emlearn) |
+| [Sensor](../../task_accel_sensor.cpp)                                 | ICM-20948 driver + ring buffer |
 
 ## 9. Reference
 | Topic | Description |

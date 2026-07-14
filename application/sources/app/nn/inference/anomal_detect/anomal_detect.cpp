@@ -12,22 +12,22 @@
 #include "anomal_detect.h"
 #include "model/anomal_detection_v1.h"
 
-#define AXES                    (3)
-#define SCALE_AXES              (0.2f)
-#define FILTER_CUTOFF           (3.0f)
-#define SAMPLING_FREQ           (58.0f)
-#define RAW_SAMPLES_PER_AXIS    (116)
-#define FFT_LENGTH              (16)
-#define FFT_OVERLAP             (FFT_LENGTH / 2)
-#define NUM_BINS                (FFT_LENGTH / 2 + 1)
-#define STRIDE                  (FFT_LENGTH - FFT_OVERLAP)
-#define FEATURE_PER_AXIS        (FEATURE_LEN / AXES)
+#define AXES (3)
+#define SCALE_AXES (0.2f)
+#define FILTER_CUTOFF (3.0f)
+#define SAMPLING_FREQ (58.0f)
+#define RAW_SAMPLES_PER_AXIS (116)
+#define FFT_LENGTH (16)
+#define FFT_OVERLAP (FFT_LENGTH / 2)
+#define NUM_BINS (FFT_LENGTH / 2 + 1)
+#define STRIDE (FFT_LENGTH - FFT_OVERLAP)
+#define FEATURE_PER_AXIS (FEATURE_LEN / AXES)
 
-#define S2                      (13.5f)
-#define PSD_SCALE               (1.0f / (SAMPLING_FREQ * S2))
-#define SCALE_UP(x)             ((x) * 9.80665f)
+#define S2 (13.5f)
+#define PSD_SCALE (1.0f / (SAMPLING_FREQ * S2))
+#define SCALE_UP(x) ((x) * 9.80665f)
 
-#define MAX_PREDICT_CLASS       (4)
+#define MAX_PREDICT_CLASS (4)
 
 static const float NORM_MEAN[FEATURE_LEN] = {673.8051f, -0.2186f, 0.1686f, 2.4455f, 4.0375f, 4.6634f, 2094.2317f, 0.4336f, 0.4695f, 2.4397f, 4.0200f, 5.4251f, 4572.1592f, -1.9544f, 2.9985f, 2.4415f, 4.0257f, 6.7278f};
 static const float NORM_SCALE[FEATURE_LEN] = {0.002215f, 1.088804f, 0.699978f, 69.897835f, 22.677576f, 0.936788f, 0.000495f, 0.873590f, 0.474650f, 78.085106f, 25.289017f, 1.047305f, 0.001687f, 1.688269f, 0.626388f, 193.082199f, 63.170059f, 12.729128f};
@@ -43,8 +43,8 @@ static const float BIQUAD_COEFFS_DF2T[3][5] = {
 };
 
 static const char *feat_name[FEATURE_PER_AXIS] = {"RMS", "Skewness", "Kurtosis", "FFT_Skew", "FFT_Kurt", "Log_PSD"};
-static const char *axis_name[AXES]             = {"X", "Y", "Z"};
-static const char *label[MAX_PREDICT_CLASS]    = {"Idle", "Left-Right", "Maritine", "Up-Down"};
+static const char *axis_name[AXES] = {"X", "Y", "Z"};
+static const char *label[MAX_PREDICT_CLASS] = {"Idle", "Left-Right", "Maritine", "Up-Down"};
 
 AnomalyInfer::AnomalyInfer()
 {
@@ -75,11 +75,11 @@ static void compute_psd_maxhold(const float *buf, uint32_t n, float psd_out[NUM_
         float cplx_buf[2 * FFT_LENGTH];
         float seg_mean = 0.0f;
 
-        arm_mean_f32((float32_t*)&buf[start], FFT_LENGTH, &seg_mean);
+        arm_mean_f32((float32_t *)&buf[start], FFT_LENGTH, &seg_mean);
 
         for (int i = 0; i < FFT_LENGTH; i++)
         {
-            cplx_buf[2 * i]     = (buf[start + i] - seg_mean) * WINDOW[i];
+            cplx_buf[2 * i] = (buf[start + i] - seg_mean) * WINDOW[i];
             cplx_buf[2 * i + 1] = 0.0f;
         }
 
@@ -119,7 +119,7 @@ static void extract_axis_features(const float *axis_data, uint32_t n, float stat
     for (uint32_t i = 0; i < n; i++)
     {
         float v = buf[i];
-        sum_sq   += v * v;
+        sum_sq += v * v;
         sum_cube += v * v * v;
         sum_four += v * v * v * v;
     }
@@ -150,7 +150,7 @@ static void extract_axis_features(const float *axis_data, uint32_t n, float stat
     for (int k = 0; k < NUM_BINS; k++)
     {
         float d = psd_safe[k] - psd_mean;
-        psd_var      += d * d;
+        psd_var += d * d;
         fft_skew_num += d * d * d;
         fft_kurt_num += d * d * d * d;
     }
@@ -222,8 +222,7 @@ int AnomalyInfer::inference(void *data, uint32_t len)
     {
         return -1;
     }
-    
-    
+
     APP_DBG("- Anomaly Features:\n");
     for (int axis = 0; axis < AXES; axis++)
     {

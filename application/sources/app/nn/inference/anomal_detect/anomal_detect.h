@@ -6,7 +6,8 @@
 
 #define FEATURE_LEN (18)
 
-enum FeatureType{
+enum FeatureType
+{
     RMS = 0,
     Skewness,
     Kurtosis,
@@ -15,12 +16,13 @@ enum FeatureType{
     Log_PSD
 };
 
-class AnomalyInfer {    
+class AnomalyInfer
+{
 private:
     float features[FEATURE_LEN];
     float filter_state[3][3][2];
 
-    int extract_feature(void* data, uint32_t len);
+    int extract_feature(void *data, uint32_t len);
 
 public:
     AnomalyInfer();
