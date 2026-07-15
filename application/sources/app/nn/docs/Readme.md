@@ -183,15 +183,9 @@ sequenceDiagram
 
 **Figure 7:** Confusion matrix on validation set, showing per-class prediction accuracy
 
-## 8. Demo
+## 8. Video Demo
 
-<div align="center">
-
-[![Demo Video](image/demo.mp4)](image/demo.mp4)
-
-**Video:** Real-time anomaly detection demo - motion classification on STM32L151 + ICM-20948
-
-</div>
+[![Demo](image/title.png)](https://github.com/user-attachments/assets/3420db6c-671e-4b4b-a058-6ce20dbc7669)
 
 ### [Configuration parameters](../trainning/Anomaly-Detection.ipynb)
 
