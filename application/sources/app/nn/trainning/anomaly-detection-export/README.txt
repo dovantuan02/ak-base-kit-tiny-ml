@@ -1,4 +1,4 @@
-# Exported dataset for dovantuan02 / Anomaly-Detection
+# Exported dataset for dovantuan02 / Anomal-Detect-v2
 
 To import this data into a new Edge Impulse project, either use:
 
