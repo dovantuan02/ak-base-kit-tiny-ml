@@ -79,7 +79,7 @@
 
 #include "Wire.h"
 
-static NNInfer infer(MotionDirectDetect);
+static NNInfer infer(MotionDirectClassify);
 /* ----------------------- Json includes ------------------------------------*/
 //#include "json.hpp"
 

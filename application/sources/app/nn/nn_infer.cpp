@@ -8,7 +8,7 @@ NNInfer::NNInfer(enum eModelName model)
     modelName = model;
     switch (model)
     {
-    case MotionDirectDetect:
+    case MotionDirectClassify:
         infer = new MotionDirectInfer();
         break;
     default:
@@ -24,7 +24,7 @@ NNInfer::~NNInfer()
     {
         switch (modelName)
         {
-        case MotionDirectDetect:
+        case MotionDirectClassify:
         {
             MotionDirectInfer *p = static_cast<MotionDirectInfer *>(infer);
             delete p;
@@ -45,7 +45,7 @@ int NNInfer::inference(void *data, uint32_t len)
 {
     switch (modelName)
     {
-    case MotionDirectDetect:
+    case MotionDirectClassify:
         return ((MotionDirectInfer *)infer)->inference(data, len);
     default:
         break;
@@ -56,7 +56,7 @@ int NNInfer::inference(void *data, uint32_t len)
 int NNInfer::inference(void *data, uint32_t len, float *output, uint32_t output_len) {
     switch (modelName)
     {
-    case MotionDirectDetect:
+    case MotionDirectClassify:
         return ((MotionDirectInfer *)infer)->inference(data, len, output, output_len);
     default:
         break;
@@ -67,7 +67,7 @@ int NNInfer::inference(void *data, uint32_t len, float *output, uint32_t output_
 int NNInfer::getMaxPredictClass() {
     switch (modelName)
     {
-    case MotionDirectDetect:
+    case MotionDirectClassify:
         return MotionDirectInfer::getMaxPredictClass();
     default:
         break;
