@@ -271,12 +271,12 @@ int main_app() {
 #endif
 	{
 		AnomalyConfidence_t conf = {0.0f};
-		conf.down = 0.1915f;
-		conf.idle = 0.45f;
+		conf.down = 0.45f;
+		conf.idle = 0.6f;
 		conf.left = 0.1517f;
-		conf.right = 0.1170f;
-		conf.unknown = 0.1951f;
-		conf.up = 0.1192f;
+		conf.right = 0.4f;
+		conf.unknown = 0.35f;
+		conf.up = 0.06f;
 		((AnomalyInfer*)(infer.getInfer()))->setConfidence(conf);
 	}
 	/* start timer for application */
@@ -374,7 +374,6 @@ void task_polling_ml() {
 		return;
 	}
 
-	/* Sliding window: peek last 1s of data, keep buffer intact for overlap */
 	static struct icm_data_internal_t last_samples[ACCEL_SAMPLE_DURATION_SECONDS * ACCEL_SAMPLE_RATE_HZ];
 	if (ring_buffer_get_last_n(&accel_sensor.sample_buff, last_samples, ACCEL_SAMPLE_DURATION_SECONDS * ACCEL_SAMPLE_RATE_HZ) != RET_RING_BUFFER_OK) {
 		return;
