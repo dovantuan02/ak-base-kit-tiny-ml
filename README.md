@@ -4,7 +4,7 @@
 
 </div>
 
-# AK-Base-Kit TinyML — Anomaly Detection on MCU
+# AK-Base-Kit TinyML — Motion Direct Classify on MCU
 
 [<img src="hardware/images/ak-foundation-logo.png" width="240"/>](https://github.com/the-ak-foundation)
 
@@ -14,7 +14,7 @@ TinyML-based anomaly detection system running on the AK Embedded Base Kit (STM32
 
 The entire pipeline from sensor sampling to feature extraction to neural inference and runs on the Cortex-M3 using [CMSIS-DSP](https://github.com/ARM-software/CMSIS-DSP), with no cloud or external compute required.
 
-> **Anomal Detection documentation**: [application/sources/app/nn/docs/Readme.md](application/sources/app/nn/docs/Readme.md)
+> **Motion Direct Classify documentation**: [application/sources/app/nn/docs/Readme.md](application/sources/app/nn/docs/Readme.md)
 
 ## Project Structure
 
