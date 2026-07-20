@@ -4,3 +4,6 @@
 [submodule "application/sources/libraries/emlearn"]
 	path = application/sources/libraries/emlearn
 	url = https://github.com/emlearn/emlearn.git
+[submodule "application/sources/libraries/TinyEKF"]
+	path = application/sources/libraries/TinyEKF
+	url = https://github.com/simondlevy/TinyEKF.git

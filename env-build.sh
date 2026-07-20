@@ -16,7 +16,7 @@ apply_patch() {
         echo "Patch cannot be applied"
     fi
 
-    cd - || exit 1
+    cd - >/dev/null || exit 1
 }
 apply_patch SparkFun_ICM-20948_ArduinoLibrary 01-fix-serial.patch
 apply_patch SparkFun_ICM-20948_ArduinoLibrary 02-enable-dmp.patch
