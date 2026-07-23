@@ -271,12 +271,6 @@ int main_app() {
 #endif
 	{
 		MotionDirectConfidence_t conf = {0.0f};
-		conf.down = 0.3f;
-		conf.idle = 0.6f;
-		conf.left = 0.06f;
-		conf.right = 0.4f;
-		conf.unknown = 0.35f;
-		conf.up = 0.07f;
 		((MotionDirectInfer*)(infer.getInfer()))->setConfidence(conf);
 	}
 	/* start timer for application */

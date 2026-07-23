@@ -12,9 +12,10 @@
 #include "view_render.h"
 
 #include "motion_direct_classify.h"
+#include "motion_preprocess.h"
 #include "model/motion_direct_classify_model.h"
 
-// #define DBG
+#define DBG
 #define AXES                    (3)
 #define SCALE_AXES              (0.00010017430721f)
 #define FILTER_CUTOFF           (26.05078125f)
@@ -34,7 +35,7 @@ static const float BIQUAD_COEFFS_DF2T[3][5] = {
 };
 #ifdef DBG
 static const char *feat_name[NUM_FEATURES_PER_AXIS] = {
-    "RMS", "Skewness", "Kurtosis", "Spec_Skew", "Spec_Kurt",
+    "RMS", "Skewness", "Kurtosis", "PSD_Skewness", "PSD_Kurtosis",
     "LogBin01", "LogBin02", "LogBin03", "LogBin04", "LogBin05",
     "LogBin06", "LogBin07", "LogBin08", "LogBin09", "LogBin10",
     "LogBin11", "LogBin12", "LogBin13", "LogBin14", "LogBin15",
@@ -55,18 +56,18 @@ const char *label[MotionClass::End] = {"Down", "Idle", "Left", "Right", "Unknown
 static float S[2 * FFT_LENGTH];
 static MotionDirectConfidence_t confidence;
 
-static void welch_psd_inplace(uint32_t n)
+static void welchPsdInplace(uint32_t n)
 {
     float win_sum_sq = 0.0f;
     for (int i = 0; i < FFT_LENGTH; i++)
     {
-        float w = 0.5f * (1.0f - cosf(2.0f * M_PI * i / (FFT_LENGTH - 1)));
+        float w = 0.5f * (1.0f - cosf(2.0f * M_PI * i / FFT_LENGTH));
         win_sum_sq += w * w;
     }
 
     for (int i = FFT_LENGTH - 1; i >= 0; i--)
     {
-        float w = 0.5f * (1.0f - cosf(2.0f * M_PI * i / (FFT_LENGTH - 1)));
+        float w = 0.5f * (1.0f - cosf(2.0f * M_PI * i / FFT_LENGTH));
         S[2 * i]     = (i < (int)n) ? S[i] * w : 0.0f;
         S[2 * i + 1] = 0.0f;
     }
@@ -81,7 +82,7 @@ static void welch_psd_inplace(uint32_t n)
     }
 }
 
-static void extract_axis_features(uint32_t n, float state[3][2], float *out)
+static void extractAxisFeatures(uint32_t n, float state[3][2], float *out)
 {
     /* Butterworth lowpass filter */
     arm_biquad_cascade_df2T_instance_f32 biquad;
@@ -93,56 +94,18 @@ static void extract_axis_features(uint32_t n, float state[3][2], float *out)
     arm_mean_f32(S, n, &mean_val);
     arm_offset_f32(S, -mean_val, S, n);
 
-    /* Time-domain */
-    float sum_sq = 0.0f;
-    float sum_cube = 0.0f;
-    float sum_four = 0.0f;
-    for (uint32_t i = 0; i < n; i++)
-    {
-        float v = S[i];
-        sum_sq += v * v;
-        sum_cube += v * v * v;
-        sum_four += v * v * v * v;
-    }
+    /* Time-domain features */
+    out[FeatureType::RMS] = Preprocess::RMS(S, n);
+    out[FeatureType::Skewness] = Preprocess::Skewness(S, n);
+    out[FeatureType::Kurtosis] = Preprocess::Kurtosis(S, n);
 
-    float rms = sqrtf(sum_sq / n);
-    float variance = sum_sq / n;
-    float std_val = (variance > 0.0f) ? sqrtf(variance) : 1e-10f;
-    float std3 = std_val * std_val * std_val;
-    float std4 = std3 * std_val;
-    float skewness = (std3 > 0.0f) ? (sum_cube / n) / std3 : 0.0f;
-    float kurtosis = (std4 > 0.0f) ? (sum_four / n) / std4 - 3.0f : -3.0f;
-
-    welch_psd_inplace(n);
+    welchPsdInplace(n);
 
     /* Spectrum skewness and kurtosis */
-    float psd_mean = 0.0f;
-    float psd_var = 0.0f;
-    float spec_skew_num = 0.0f;
-    float spec_kurt_num = 0.0f;
-    for (int k = 0; k < NUM_BINS; k++)
-    {
-        float v = (S[k] > 1e-10f) ? S[k] : 1e-10f;
-        S[k] = v; /* replace in-place for log10 pass */
-        psd_mean += v;
-    }
-    psd_mean /= NUM_BINS;
-    for (int k = 0; k < NUM_BINS; k++)
-    {
-        float d = S[k] - psd_mean;
-        psd_var += d * d;
-        spec_skew_num += d * d * d;
-        spec_kurt_num += d * d * d * d;
-    }
-    psd_var /= NUM_BINS;
-    spec_skew_num /= NUM_BINS;
-    spec_kurt_num /= NUM_BINS;
+    out[FeatureType::Spec_Skew] = Preprocess::PsdSkewness(S, NUM_BINS);
+    out[FeatureType::Spec_Kurt] = Preprocess::PsdKurtosis(S, NUM_BINS);
 
-    float psd_std = (psd_var > 0.0f) ? sqrtf(psd_var) : 1e-10f;
-    float spec_skew = spec_skew_num / (psd_std * psd_std * psd_std + 1e-10f);
-    float spec_kurt = spec_kurt_num / (psd_var * psd_var + 1e-10f) - 3.0f;
-
-    /* Log10 of bins */
+    /* Log10 of PSD bins */
     float cutoff_hz = FILTER_CUTOFF;
     float bin_resolution = SAMPLING_FREQ / FFT_LENGTH;
     int stop_bin = (int)(cutoff_hz / bin_resolution + 0.5f) + 1;
@@ -150,18 +113,13 @@ static void extract_axis_features(uint32_t n, float state[3][2], float *out)
     {
         stop_bin = NUM_BINS;
     }
-    int start_bin = 1;
+    uint8_t start_bin = 1;
     int num_bins_used = stop_bin - start_bin;
-
-    out[RMS] = rms;
-    out[Skewness] = skewness;
-    out[Kurtosis] = kurtosis;
-    out[Spec_Skew] = spec_skew;
-    out[Spec_Kurt] = spec_kurt;
 
     for (int i = 0; i < num_bins_used; i++)
     {
-        out[5 + i] = log10f(S[start_bin + i]);
+        float v = (S[start_bin + i] > 1e-10f) ? S[start_bin + i] : 1e-10f;
+        out[5 + i] = log10f(v);
     }
     for (int i = num_bins_used; i < 29; i++)
     {
@@ -230,7 +188,7 @@ MotionDirectInfer::~MotionDirectInfer()
 {
 }
 
-int MotionDirectInfer::extract_feature(void *data, uint32_t len)
+int MotionDirectInfer::extractFeature(void *data, uint32_t len)
 {
     memset(filter_state, 0, sizeof(filter_state));
     if (len != RAW_SAMPLES_PER_AXIS)
@@ -246,7 +204,7 @@ int MotionDirectInfer::extract_feature(void *data, uint32_t len)
         {
             S[i] = raw[i * AXES + a] * SCALE_AXES;
         }
-        extract_axis_features(len, filter_state[a], &features[a * NUM_FEATURES_PER_AXIS]);
+        extractAxisFeatures(len, filter_state[a], &features[a * NUM_FEATURES_PER_AXIS]);
     }
 
     return 0;
@@ -261,29 +219,18 @@ int MotionDirectInfer::inference(void *data, uint32_t len, float *output, uint32
 {
     uint32_t prev = sys_ctrl_millis();
 
-    if (extract_feature(data, len) != 0)
+    if (extractFeature(data, len) != 0)
     {
         return -1;
     }
 
-#ifdef DBG
-    APP_DBG("- MotionDirect Features:\n");
-    for (int axis = 0; axis < AXES; axis++)
-    {
-        xfprintf((void (*)(int))sys_ctrl_shell_put_char, "[%s] ", axis_name[axis]);
-        for (int feature = 0; feature < 5; feature++)
-        {
-            xfprintf((void (*)(int))sys_ctrl_shell_put_char, "%s=%.4f ", feat_name[feature], features[axis * NUM_FEATURES_PER_AXIS + feature]);
-        }
-        xfprintf((void (*)(int))sys_ctrl_shell_put_char,"\n");
-    }
-#endif
+
 
     for (int i = 0; i < FEATURE_LEN; i++)
     {
         features[i] = (features[i] - NORM_MEAN[i]) * NORM_SCALE[i];
     }
-
+    
     if (motion_direct_model_regress(features, FEATURE_LEN, S, MAX_PREDICT_CLASS) != EmlOk)
     {
         return -1;
@@ -307,13 +254,25 @@ int MotionDirectInfer::inference(void *data, uint32_t len, float *output, uint32
             predicted = i;
         }
     }
-    if (predicted == MotionClass::Right && S[MotionClass::Left] >= confidence.left) {
-        predicted = MotionClass::Left;
+    // if (predicted == MotionClass::Right && S[MotionClass::Left] >= confidence.left) {
+    //     predicted = MotionClass::Left;
+    // }
+    // if (predicted == MotionClass::Down && S[MotionClass::Up] >= confidence.up) {
+    //     predicted = MotionClass::Up;
+    // }
+#ifdef DBG
+    APP_DBG("- MotionDirect Features:\n");
+    for (int axis = 0; axis < AXES; axis++)
+    {
+        // xfprintf((void (*)(int))sys_ctrl_shell_put_char, "[%s] ", axis_name[axis]);
+        for (int feature = 0; feature < 5; feature++)
+        {
+            xfprintf((void (*)(int))sys_ctrl_shell_put_char, " %.4f ", features[axis * NUM_FEATURES_PER_AXIS + feature]);
+        }
+        // xfprintf((void (*)(int))sys_ctrl_shell_put_char,"\n");
     }
-    if (predicted == MotionClass::Down && S[MotionClass::Up] >= confidence.up) {
-        predicted = MotionClass::Up;
-    }
-
+    xfprintf((void (*)(int))sys_ctrl_shell_put_char, " %s\n", predicted == -1 ? "None" : label[predicted]);
+#endif
     APP_DBG("Pointer [%08X]\n", (unsigned int)this);
     APP_DBG("\tP(unknown)= %.3f\n", S[4]);
     APP_DBG("\tP(idle)= %.3f\n", S[1]);

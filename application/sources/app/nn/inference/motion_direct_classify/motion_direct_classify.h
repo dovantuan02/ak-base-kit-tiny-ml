@@ -56,7 +56,7 @@ class MotionDirectInfer
 private:
     float features[FEATURE_LEN];
     float filter_state[6][3][2]; // 6 stages for order-6 Butterworth
-    int extract_feature(void *data, uint32_t len);
+    int extractFeature(void *data, uint32_t len);
 
 public:
     MotionDirectInfer();
